@@ -1,111 +1,99 @@
 package main
 
 import (
-	irc "github.com/fluffle/goirc/client"
 	"github.com/mattn/go-runewidth"
 	"github.com/nsf/termbox-go"
-	//"bufio"
+	irc "github.com/fluffle/goirc/client"
 	//"os"
-	"fmt"
-	//"strings"
+	"crypto/tls"
 )
 
-const token = "your ouath token here"
-const twitch = "irc.chat.twitch.tv:6667"
+const token = "oauth:yourtoken here"
+const twitch = "irc.chat.twitch.tv:443"
 
 func main() {
-
 	if err := termbox.Init(); err != nil {
 		panic(err)
 	}
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
 
-	queue := make([]string, 0)
+	messages := make([]string, 0)
 
 	uInput := ""
 
-	redraw_all(queue, uInput)
-
-	cfg := irc.NewConfig("your username here")
-	cfg.SSL = false
+	cfg := irc.NewConfig("yourusernamehere")
+	cfg.SSL = true
+	cfg.SSLConfig = &tls.Config{ServerName: "irc.chat.twitch.tv"}
 	cfg.Server = twitch
 	cfg.Pass = token
+
+	channel := "#dota2ti"
+
 	c := irc.Client(cfg)
-	c.EnableStateTracking()
 
-	channel := "#vinesauce"
-
-	//channel := os.Args[1]
-	//println(channel)
-
-	c.HandleFunc(irc.CONNECTED , func(conn *irc.Conn, line *irc.Line) {
+	c.HandleFunc(irc.CONNECTED, func(conn *irc.Conn, line *irc.Line) {
 		conn.Join(channel)
 	})
 
-	quit := make(chan bool)
-
-	c.HandleFunc(irc.DISCONNECTED, func(conn *irc.Conn, line *irc.Line) {
-		quit <- true
-	})
-
 	c.HandleFunc(irc.PRIVMSG, func(conn *irc.Conn, line *irc.Line) {
-		queue = addToQueue(queue, line.Nick + ": " + line.Args[1])
+		messages = newMessage(messages, line.Nick + ": " + line.Args[1])
 	})
 
-
-	if err := c.ConnectTo(twitch); err != nil {
-		queue = addToQueue(queue, fmt.Sprintf("Connection error: %s\n", err))
-
+	if err := c.Connect(); err != nil {
+		messages = newMessage(messages, err.Error())
+		redraw_all(messages, uInput)
 	}
 
-	chat_loop:
-		for {
+	go func(){
+		for{
+			redraw_all(messages, uInput)
+		}
+	}()
 
-			switch ev := termbox.PollEvent(); ev.Type {
-			case termbox.EventKey:
-				switch ev.Key{
-				case termbox.KeyEsc:
-					break chat_loop
-				case termbox.KeySpace:
-					uInput += " "
-				case termbox.KeyEnter:
-					queue = addToQueue(queue, "You: " + uInput)
+chat_loop:
+	for {
+		switch ev := termbox.PollEvent(); ev.Type {
+		case termbox.EventKey:
+			switch ev.Key {
+			case termbox.KeyEsc:
+				break chat_loop
+			case termbox.KeySpace:
+				uInput += " "
+			case termbox.KeyEnter:
+				if len(uInput) > 2 {
+					messages = newMessage(messages, "You: " + uInput)
 					c.Privmsg(channel, uInput)
 					uInput = ""
-				case termbox.KeyBackspace:
-					if len(uInput) > 0{
-						uInput = uInput[0:len(uInput)-1]
-					}
-				case termbox.KeyBackspace2:
-					if len(uInput) > 0{
-						uInput = uInput[0:len(uInput)-1]
-					}
-				default:
-					if ev.Ch != 0 {
-						uInput += string(ev.Ch)
-					}
 				}
-			case termbox.EventError:
-				panic(ev.Err)
+			case termbox.KeyBackspace2:
+				if len(uInput) > 0{
+					uInput = uInput[0:len(uInput)-1]
+				}
+			case termbox.KeyBackspace:
+				if len(uInput) > 0{
+					uInput = uInput[0:len(uInput)-1]
+				}
+			default:
+				if ev.Ch != 0 {
+					uInput += string(ev.Ch)
+				}
 			}
-
-			redraw_all(queue, uInput)
+		case termbox.EventError:
+			panic(ev.Err)
 		}
-}
-
-
-
-//it's actually a stack...
-func addToQueue(queue []string, text string)([]string){
-	_, h := termbox.Size()
-	if len(queue) == h - 2{
-		queue = queue[1:]
 	}
-	return append(queue, text)
 }
 
-func redraw_all(queue []string, uInput string){
+func newMessage(messages []string, text string) ([]string){
+	_, h := termbox.Size()
+	if len(messages) == h - 2 {
+		messages = messages[1:]
+	}
+	return append(messages, text)
+}
+
+func redraw_all(messages []string, uInput string) {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
 	w, h := termbox.Size()
@@ -113,8 +101,8 @@ func redraw_all(queue []string, uInput string){
 
 	pos := 0
 
-	for i := len(queue) - 1; i >= 0; i--{
-		tbprint(1, h - pos - 2, termbox.ColorWhite, coldef, queue[i])
+	for i := len(messages) - 1; i >= 0; i-- {
+		tbprint(1, h - pos - 2, termbox.ColorWhite, coldef, messages[i])
 		pos++
 	}
 
