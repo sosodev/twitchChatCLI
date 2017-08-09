@@ -1,6 +1,8 @@
 # twitchChatCLI
 A simple CLI for Twitch chat written in GO
 
+<img src="http://i.imgur.com/QwDZsR2.png">
+
 
 ## Usage
 
