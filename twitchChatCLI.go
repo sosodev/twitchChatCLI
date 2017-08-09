@@ -6,15 +6,24 @@ import (
 	irc "github.com/fluffle/goirc/client"
 	//"os"
 	"crypto/tls"
+	"github.com/simplyserenity/twitchOAuth"
+	"net/http"
+	"github.com/buger/jsonparser"
+	"io/ioutil"
+	"strings"
+	"os"
 )
 
-const token = "oauth:yourtoken here"
 const twitch = "irc.chat.twitch.tv:443"
+const clientID = "dlpf1993tub698zw0ic6jlddt9e893"
 
 func main() {
 	if err := termbox.Init(); err != nil {
 		panic(err)
 	}
+
+	token := twitchAuth.GetToken(clientID)
+
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
 
@@ -22,13 +31,13 @@ func main() {
 
 	uInput := ""
 
-	cfg := irc.NewConfig("yourusernamehere")
+	cfg := irc.NewConfig(getUsername(token, clientID))
 	cfg.SSL = true
 	cfg.SSLConfig = &tls.Config{ServerName: "irc.chat.twitch.tv"}
 	cfg.Server = twitch
-	cfg.Pass = token
+	cfg.Pass = "oauth:" + token
 
-	channel := "#dota2ti"
+	channel := "#" + strings.ToLower(os.Args[1])
 
 	c := irc.Client(cfg)
 
@@ -38,18 +47,13 @@ func main() {
 
 	c.HandleFunc(irc.PRIVMSG, func(conn *irc.Conn, line *irc.Line) {
 		messages = newMessage(messages, line.Nick + ": " + line.Args[1])
+		redraw_all(messages, uInput)
 	})
 
 	if err := c.Connect(); err != nil {
 		messages = newMessage(messages, err.Error())
 		redraw_all(messages, uInput)
 	}
-
-	go func(){
-		for{
-			redraw_all(messages, uInput)
-		}
-	}()
 
 chat_loop:
 	for {
@@ -82,7 +86,38 @@ chat_loop:
 		case termbox.EventError:
 			panic(ev.Err)
 		}
+		redraw_all(messages, uInput)
 	}
+}
+
+func getUsername(token string, cId string) (username string){
+	rclient := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://api.twitch.tv/kraken/user", nil)
+	req.Header.Set("Accept", "application/vnd.twitchtv.v5+json")
+	req.Header.Set("Client-ID", cId)
+	req.Header.Set("Authorization", "OAuth " + token)
+
+	res, err := rclient.Do(req)
+
+	defer res.Body.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		panic(err)
+	}
+
+	name, err :=jsonparser.GetString(body, "display_name")
+
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.ToLower(name)
 }
 
 func newMessage(messages []string, text string) ([]string){
