@@ -17,6 +17,12 @@ import (
 const twitch = "irc.chat.twitch.tv:443"
 const clientID = "dlpf1993tub698zw0ic6jlddt9e893"
 
+type ChatLine struct {
+	Nick string
+	NickColor termbox.Attribute
+	Line string
+}
+
 func main() {
 	if err := termbox.Init(); err != nil {
 		panic(err)
@@ -27,11 +33,11 @@ func main() {
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
 
-	messages := make([]string, 0)
+	messages := make([]ChatLine, 0)
 
 	uInput := ""
-
-	cfg := irc.NewConfig(getUsername(token, clientID))
+	username := getUsername(token, clientID)
+	cfg := irc.NewConfig(strings.ToLower(username))
 	cfg.SSL = true
 	cfg.SSLConfig = &tls.Config{ServerName: "irc.chat.twitch.tv"}
 	cfg.Server = twitch
@@ -46,14 +52,33 @@ func main() {
 	})
 
 	c.HandleFunc(irc.PRIVMSG, func(conn *irc.Conn, line *irc.Line) {
-		messages = newMessage(messages, line.Nick + ": " + line.Args[1])
-		redraw_all(messages, uInput)
+		w, _ := termbox.Size()
+
+		toPrint := line.Args[1]
+		message := ChatLine{line.Nick, termbox.ColorCyan, ""}
+
+		for _, r := range toPrint {
+			chr := string(r)
+
+			if chr == "\n"{
+				messages = newMessage(messages, message)
+				message = ChatLine{line.Nick, termbox.ColorCyan, ""}
+			} else if len(message.Line) + 1 <= int(float64(w) * 0.8) || chr != " "{
+				message.Line += chr
+			} else {
+				messages = newMessage(messages, message)
+				message = ChatLine{"", termbox.ColorCyan, ""}
+			}
+		}
+		messages = newMessage(messages, message)
+		redraw_all(messages, uInput, username)
 	})
 
 	if err := c.Connect(); err != nil {
-		messages = newMessage(messages, err.Error())
-		redraw_all(messages, uInput)
+		panic(err)
 	}
+
+	redraw_all(messages, uInput, username)
 
 chat_loop:
 	for {
@@ -66,7 +91,7 @@ chat_loop:
 				uInput += " "
 			case termbox.KeyEnter:
 				if len(uInput) > 2 {
-					messages = newMessage(messages, "You: " + uInput)
+					messages = newMessage(messages, ChatLine{username, termbox.ColorGreen, uInput})
 					c.Privmsg(channel, uInput)
 					uInput = ""
 				}
@@ -86,7 +111,7 @@ chat_loop:
 		case termbox.EventError:
 			panic(ev.Err)
 		}
-		redraw_all(messages, uInput)
+		redraw_all(messages, uInput, username)
 	}
 }
 
@@ -117,31 +142,42 @@ func getUsername(token string, cId string) (username string){
 		panic(err)
 	}
 
-	return strings.ToLower(name)
+	return name
 }
 
-func newMessage(messages []string, text string) ([]string){
+func newMessage(messages []ChatLine, message ChatLine) ([]ChatLine){
 	_, h := termbox.Size()
 	if len(messages) == h - 2 {
 		messages = messages[1:]
 	}
-	return append(messages, text)
+	return append(messages, message)
 }
 
-func redraw_all(messages []string, uInput string) {
+func redraw_all(messages []ChatLine, uInput string, username string) {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
 	w, h := termbox.Size()
-	tbprint(w - 18, 0, termbox.ColorWhite, coldef, "Press ESC to quit")
+	tbprint(w - 18, 0, termbox.ColorRed, coldef, "Press ESC to quit")
 
 	pos := 0
 
 	for i := len(messages) - 1; i >= 0; i-- {
-		tbprint(1, h - pos - 2, termbox.ColorWhite, coldef, messages[i])
+		if messages[i].Nick != ""{
+			tbprint(1, h - pos - 2, messages[i].NickColor, coldef, messages[i].Nick + ": ")
+
+			if strings.Contains(messages[i].Line, "@" + username){
+				tbprint(1 + len(messages[i].Nick + ": "), h - pos - 2, termbox.ColorBlack, termbox.ColorWhite, messages[i].Line)
+			} else{
+				tbprint(1 + len(messages[i].Nick + ": "), h - pos - 2, termbox.ColorWhite, termbox.ColorDefault, messages[i].Line)
+			}
+
+		} else {
+			tbprint(1, h - pos - 2, termbox.ColorWhite, coldef, messages[i].Line)
+		}
 		pos++
 	}
 
-	tbprint(1, h - 1, termbox.ColorWhite, coldef, "You: " + uInput)
+	tbprint(1, h - 1, termbox.ColorGreen, coldef, username + ": " + uInput)
 	termbox.Flush()
 }
 
