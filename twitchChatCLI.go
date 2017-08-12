@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"os"
+	"math/rand"
 )
 
 const twitch = "irc.chat.twitch.tv:443"
@@ -57,23 +58,32 @@ func main() {
 		conn.Join(channel)
 	})
 
+
+	userColors := make(map[string]termbox.Attribute)
+
+
 	c.HandleFunc(irc.PRIVMSG, func(conn *irc.Conn, line *irc.Line) {
 		w, _ := termbox.Size()
 
 		toPrint := line.Args[1]
-		message := ChatLine{line.Nick, termbox.ColorCyan, ""}
+
+		if userColors[line.Nick] == termbox.ColorDefault {
+			userColors[line.Nick] = getRandomColor()
+		}
+
+		message := ChatLine{line.Nick, userColors[line.Nick], ""}
 
 		for _, r := range toPrint {
 			chr := string(r)
 
 			if chr == "\n"{
 				messages = newMessage(messages, message)
-				message = ChatLine{line.Nick, termbox.ColorCyan, ""}
+				message = ChatLine{line.Nick, userColors[line.Nick], ""}
 			} else if len(message.Line) + 1 <= int(float64(w) * 0.8) || chr != " "{
 				message.Line += chr
 			} else {
 				messages = newMessage(messages, message)
-				message = ChatLine{"", termbox.ColorCyan, ""}
+				message = ChatLine{"", userColors[line.Nick], ""}
 			}
 		}
 		messages = newMessage(messages, message)
@@ -118,6 +128,26 @@ chat_loop:
 			panic(ev.Err)
 		}
 		redraw_all(messages, uInput, username)
+	}
+}
+
+func getRandomColor()(termbox.Attribute){
+	rng := rand.Intn(5)
+	switch rng {
+	case 0:
+		return termbox.ColorBlue
+	case 1:
+		return termbox.ColorRed
+	case 2:
+		return termbox.ColorGreen
+	case 3:
+		return termbox.ColorCyan
+	case 4:
+		return termbox.ColorMagenta
+	case 5:
+		return termbox.ColorYellow
+	default:
+		return termbox.ColorCyan
 	}
 }
 
