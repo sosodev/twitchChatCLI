@@ -28,7 +28,13 @@ func main() {
 		panic(err)
 	}
 
-	token := twitchAuth.GetToken(clientID)
+	scopes := []string{"chat_login", "user_read"}
+
+	token, err := twitchAuth.GetToken(clientID, scopes)
+
+	if err != nil {
+		panic(err)
+	}
 
 	defer termbox.Close()
 	termbox.SetInputMode(termbox.InputEsc)
