@@ -1,12 +1,14 @@
 # twitchChatCLI
 A simple CLI for Twitch chat written in GO
 
-<img src="http://i.imgur.com/QwDZsR2.png">
+<img src="http://i.imgur.com/e930sea.png">
 
 
 ## Usage
 
-Download the repo and then
+Download the correct binary from the [releases](https://github.com/SimplySerenity/twitchChatCLI/releases)
+
+Then run it from your terminal like so:
 
 ```
 ./twitchChatCLI channelnamehere
