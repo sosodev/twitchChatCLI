@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3e89fce2-3878-4455-b7f3-8627039e050a" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/twitchChatCLI" afterPath="$PROJECT_DIR$/twitchChatCLI" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/twitchChatCLI.go" afterPath="$PROJECT_DIR$/twitchChatCLI.go" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/twitchChatCLI-darwin-amd64" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/twitchChatCLI-linux-386" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/twitchChatCLI-linux-amd64" afterPath="" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -18,8 +18,8 @@
       <file leaf-file-name="twitchChatCLI.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/twitchChatCLI.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1152">
-              <caret line="97" column="0" lean-forward="true" selection-start-line="97" selection-start-column="0" selection-end-line="97" selection-end-column="0" />
+            <state relative-caret-position="576">
+              <caret line="44" column="14" lean-forward="false" selection-start-line="44" selection-start-column="14" selection-end-line="44" selection-end-column="14" />
               <folding>
                 <element signature="e#14#274#0" expanded="true" />
               </folding>
@@ -469,8 +469,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/twitchChatCLI.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1152">
-          <caret line="97" column="0" lean-forward="true" selection-start-line="97" selection-start-column="0" selection-end-line="97" selection-end-column="0" />
+        <state relative-caret-position="576">
+          <caret line="44" column="14" lean-forward="false" selection-start-line="44" selection-start-column="14" selection-end-line="44" selection-end-column="14" />
           <folding>
             <element signature="e#14#274#0" expanded="true" />
           </folding>
