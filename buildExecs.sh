@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 platforms=("windows/amd64" "windows/386" "darwin/amd64" "linux/amd64" "linux/386")
