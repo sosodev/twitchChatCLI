@@ -76,11 +76,18 @@ func main() {
 
 	// tbPrint prints a string with termbox
 	tbPrint := func(x int, y int, foreground termbox.Attribute, background termbox.Attribute, message string) {
+		condition := runewidth.NewCondition()
+		condition.StrictEmojiNeutral = false
+
 		graphemes := uniseg.NewGraphemes(message)
 		for graphemes.Next() {
 			for _, graphemeRune := range graphemes.Runes() {
 				termbox.SetCell(x, y, graphemeRune, foreground, background)
-				x += runewidth.RuneWidth(graphemeRune)
+				w := runewidth.RuneWidth(graphemeRune)
+				if w == 0 || (w == 2 && runewidth.IsAmbiguousWidth(graphemeRune)) {
+					w = 1
+				}
+				x += w
 			}
 		}
 	}
@@ -120,7 +127,14 @@ func main() {
 	// drawClient is a function that... draws the client
 	drawClient := func() {
 		// clear the terminal
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+		err = termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+		if err != nil {
+			panic(fmt.Sprintf("failed to clear termbox buffer: %s\n", err))
+		}
+		err = termbox.Flush()
+		if err != nil {
+			panic(fmt.Sprintf("failed to flush termbox buffer: %s\n", err))
+		}
 
 		width, height := termbox.Size()
 
@@ -131,12 +145,17 @@ func main() {
 
 		// iterate through all of the lines in reverse (to draw them newest to oldest)
 		state.ReverseEachLine(func(position int, line state.ChatLine) {
+			subtract := 2
+			if os.Getenv("CLEAN") == "true" {
+				subtract = 1
+			}
+
 			// no pointless iteration here
-			if position > height-2 {
+			if position > height-subtract {
 				return
 			}
 
-			drawLine(line, height-2-position)
+			drawLine(line, height-subtract-position)
 		})
 
 		// draw the user's input at the bottom of the terminal
@@ -147,7 +166,7 @@ func main() {
 		// flush the termbox buffer to the terminal
 		err = termbox.Flush()
 		if err != nil {
-			panic(fmt.Sprintf("failed to flush termbox: %s", err))
+			panic(fmt.Sprintf("failed to flush termbox: %s\n", err))
 		}
 	}
 
