@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/mattn/go-runewidth"
+	"github.com/rivo/uniseg"
 	"log"
 	"math/rand"
 	"time"
 
 	irc "github.com/fluffle/goirc/client"
-	"github.com/mattn/go-runewidth"
 	"github.com/nsf/termbox-go"
 	"github.com/sosodev/twitchChatCLI/state"
 	"github.com/sosodev/twitchChatCLI/twitch"
@@ -75,9 +76,12 @@ func main() {
 
 	// tbPrint prints a string with termbox
 	tbPrint := func(x int, y int, foreground termbox.Attribute, background termbox.Attribute, message string) {
-		for _, char := range message {
-			termbox.SetCell(x, y, char, foreground, background)
-			x += runewidth.RuneWidth(char)
+		graphemes := uniseg.NewGraphemes(message)
+		for graphemes.Next() {
+			for _, graphemeRune := range graphemes.Runes() {
+				termbox.SetCell(x, y, graphemeRune, foreground, background)
+				x += runewidth.RuneWidth(graphemeRune)
+			}
 		}
 	}
 
@@ -121,7 +125,9 @@ func main() {
 		width, height := termbox.Size()
 
 		// draw the escape message
-		tbPrint(width-18, 0, termbox.ColorLightBlue, termbox.ColorDefault, "Press ESC to quit")
+		if os.Getenv("CLEAN") != "true" {
+			tbPrint(width-18, 0, termbox.ColorLightBlue, termbox.ColorDefault, "Press ESC to quit")
+		}
 
 		// iterate through all of the lines in reverse (to draw them newest to oldest)
 		state.ReverseEachLine(func(position int, line state.ChatLine) {
@@ -134,7 +140,9 @@ func main() {
 		})
 
 		// draw the user's input at the bottom of the terminal
-		tbPrint(1, height-1, state.NickColor(username), termbox.ColorDefault, fmt.Sprintf("%s: %s", username, userInput))
+		if os.Getenv("CLEAN") != "true" {
+			tbPrint(1, height-1, state.NickColor(username), termbox.ColorDefault, fmt.Sprintf("%s: %s", username, userInput))
+		}
 
 		// flush the termbox buffer to the terminal
 		err = termbox.Flush()

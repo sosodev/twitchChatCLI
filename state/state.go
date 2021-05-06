@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/nsf/termbox-go"
+	"github.com/rivo/uniseg"
 )
 
 // ChatLine is the data for a line of chat
@@ -22,8 +23,8 @@ const (
 )
 
 var (
-	lines      []ChatLine                   = make([]ChatLine, 0)
-	userColors map[string]termbox.Attribute = make(map[string]termbox.Attribute)
+	lines      = make([]ChatLine, 0)
+	userColors = make(map[string]termbox.Attribute)
 	colorLock  sync.Mutex
 	linesLock  sync.Mutex
 )
@@ -78,8 +79,9 @@ func NewMessage(nick string, showNick bool, message string) {
 		nuMessage := ""
 
 		first := true
-		for _, char := range message {
-			nuMessage += string(char)
+		graphemes := uniseg.NewGraphemes(message)
+		for graphemes.Next() {
+			nuMessage += graphemes.Str()
 
 			if len(nuMessage) == lineLimit {
 				NewMessage(nick, first, nuMessage)
