@@ -16,4 +16,8 @@ Then run it from your terminal like so:
 
 Your browser should open and ask you to verify and that's about it!
 
-Also, if you want a very minimal look you can do `CLEAN=true ./twitchChatCLI channelnamehere`
+Also, if you want a very minimal look you can do
+
+```
+CLEAN=true ./twitchChatCLI channelnamehere
+```
