@@ -1,23 +1,6 @@
 # twitchChatCLI
-A simple CLI for Twitch chat written in GO
 
-<img src="http://i.imgur.com/e930sea.png">
+I'm archiving this project. It was fun to see it pick up usage but I just don't have the time to chase the edge cases. Rendering unicode correctly across many
+terminal clients is probably impossible. Trying to print with proper, cute formatting transforms unicode from jank into hard crashes and that just sucks. 
 
-
-## Usage
-
-Download the correct binary from the [releases](https://github.com/SimplySerenity/twitchChatCLI/releases)
-
-Then run it from your terminal like so:
-
-```
-./twitchChatCLI channelnamehere
-```
-
-Your browser should open and ask you to verify and that's about it!
-
-Also, if you want a very minimal look you can do
-
-```
-CLEAN=true ./twitchChatCLI channelnamehere
-```
+It could probably fixed eventually with extensive testing and upstream pull requests but again it just isn't worth the effort.
